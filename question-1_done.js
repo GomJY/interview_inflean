@@ -26,8 +26,6 @@
         pro_in_obj: pro_res({ und: pro_res(undefined), str: pro_rej('str') }),
         
         pro_in_arr: ['str in arr', pro_res({ k: 'obj in arr', err: pro_rej('err1') }), ['arr in arr', pro_rej('err2')]],
-        
-        pro_in_arObj: pro_res({test: "test", test2: pro_res([undefined, pro_res("test2")])}),
     };
     const sample = {
         boo: true, str: '',
@@ -46,58 +44,45 @@
      * @param data
      * @returns {*} data 에 포함된 Promise 값들이 모두 resolve 혹은 reject 된 결과값으로 변환된 데이터 셋
      */
-    const parse = async (data) => {
-        console.log("parse Start");
+    const parse = data => {
         const err_format = str => `${str} (에러해결)`;
-        const group_has_Promise = (object) => {
-            if(!isObjectArray(object)) {
-                return false;
-            }
+        //Object, Array안에 Promise객체가 있는지 확인
+        const has_promise_in_group = (object) => {
+            if(!isObjectArray(object)) { return false; }
             let keyNames = object.constructor === Array  ? new Array(object.length).fill(0).map((v, index) => index)
-                                                        : Object.keys(object);
+                                                         : Object.keys(object);
             for(let keyName of keyNames) {
-                if(object[keyName].constructor === Promise)
-                    return true;
-            }
+                if(object[keyName] instanceof Promise) { return true;}
+            }                    
             return false;
         }
+        //Object, Array인지 검사
         const isObjectArray = (data) => data == null || (data.constructor !== Array && Object(data).keys == 0) ? false : true;
-        const get_promiseAfterData = (object) => {
+        //Object를 array로 전환
+        const object_to_array = (object) => Object.keys(object).map(keyName => object[keyName]); 
+        //promise 후에 값 받기
+        const get_promiseAfter = async (object) => {
             let result = {};
-            const promise_group = [];
-            const keyNames = Object.keys(object);
-            for(let objName of keyNames) {
-                if(object[objName].constructor === Promise) {
-                    let res_data;
-                    let myPromise = new Promise(res => {
-                        object[objName].then(then_1 => {
-                            res_data = [objName, then_1];
-                        }).catch(err => {res_data = [objName, err_format(err)]}).finally(() => {res(res_data);});
+            for(let objName in object) {
+                //Promise인 경우 format에 맞게 then, catch 처리 후 다시 내부 검사
+                if(object[objName] instanceof Promise) {
+                    result[objName] = await new Promise(res => {
+                        object[objName]
+                            .then(async (then_1) => res(has_promise_in_group(then_1) ? await get_promiseAfter(then_1) : then_1))
+                            .catch(err => {res(err_format(err));});
                     });
-                    promise_group.push(myPromise);
+                //Array, Object 형식인 경우 내부 검사
+                } else if(isObjectArray(object[objName]) && has_promise_in_group(object[objName])) {
+                    result[objName] = await new Promise(res => {res(get_promiseAfter(object[objName]))});
+                // 참조형 변수는 바로 대입
                 } else {
                     result[objName] = object[objName];
                 }
             }
-            return new Promise((res) => {
-                Promise.all(promise_group).then(async (promiseResult) => {
-                    for(let [objName, data] of promiseResult) {
-                        // result[objName] = {};
-                        console.log("objName1", objName);
-                        // result[objName] = data;
-                        if(group_has_Promise(data)) {
-                            console.log("objName2", objName);
-                            let promise_result = await get_promiseAfterData(data);
-                        }else {
-                            result[objName] = data;
-                        }
-                    }
-                    console.log("res", result);
-                    res(result);
-                });
-            });
+            //Array를 Object로 처리한 경우 다시 Object를 Array로 변환
+            return result.hasOwnProperty("0") ? object_to_array(result) : result;
         }
-        return await get_promiseAfterData(data);
+        return get_promiseAfter(data);
     };
     const Q1 = (data, callback) => {
         const result = parse(data);
@@ -113,5 +98,4 @@
         console.log(result);
         console.log();
     });
-    
 }();
