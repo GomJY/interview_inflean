@@ -1,3 +1,5 @@
+const { go1 } = require("../../myFunctionalJavascript/module");
+
 /**
  * 1.
  * data 객체는
@@ -26,8 +28,8 @@
         pro_in_obj: pro_res({ und: pro_res(undefined), str: pro_rej('str') }),
         
         pro_in_arr: ['str in arr', pro_res({ k: 'obj in arr', err: pro_rej('err1') }), ['arr in arr', pro_rej('err2')]],
-        
-        pro_in_arObj: pro_res({test: "test", test2: pro_res([undefined, pro_res("test2")])}),
+
+        // pro_in_obj_in_obj: pro_res({ a: pro_res({a_1: pro_res(1), a_2: pro_rej(2)}), b: pro_rej({b_1: 1, b_2: 2}) }),
     };
     const sample = {
         boo: true, str: '',
@@ -46,11 +48,59 @@
      * @param data
      * @returns {*} data 에 포함된 Promise 값들이 모두 resolve 혹은 reject 된 결과값으로 변환된 데이터 셋
      */
-    const parse = async (data) => {
-        const err_format = str => `${str} (에러해결)`;
-        const isObjectArray = (data) => data == null || (data.constructor !== Array && Object(data).keys == 0) ? false : true;
-        const isPromise = any => any instanceof Promise;
-        
+    const parse = async data => {
+        const log = console.log;
+        const curry = f => (a, ..._) => _.length ? f(a, ..._) : (..._) => f(a, ..._);
+        const reduce = curry((f, acc, iter) => {
+            if(!iter) {
+                iter = acc[Symbol.iterator]();
+                acc = iter.next().value;
+            } else {
+                iter = iter[Symbol.iterator]();
+            }
+            return go1(acc, function recur(acc) {
+                let cur;
+                while(!(cur = iter.next()).done) {
+                    const a = cur.value;
+                    acc = f(acc, a);
+                    if(acc instanceof Promise) return acc.then(recur);
+                }
+                return acc;
+            });
+        });
+        const go = (...args) => reduce((a, f) => f(a), args);
+        const go1 = (a, f) => a instanceof Promise ? a.then(f) : f(a);
+        const map = curry((f, iter) => { 
+            let res = [];
+            for(const p of iter) {
+                res.push(f(p));
+            }
+            return res;
+        });
+        const obj_to_objArray = object => Object.keys(object).map(v => {let r = {}; r[v] = object[v]; return r;});
+        let me = go(
+            obj_to_objArray(data),
+            await map(async a => {
+                if(Object.values(a).shift() instanceof Promise) {
+                    let my = await new Promise(res => {
+                        let result = {};
+                        Object.values(a).shift().then(then_1 => {
+                            result[Object.keys(a).shift()] = then_1;
+                            res(result);   
+                        }).catch(err => {
+                            result[Object.keys(a).shift()] = `${err} (에러해결)`;
+                            res(result);
+                        });
+                    });
+                    console.log("Promise", my);
+                    return my;
+                }
+                console.log(a);
+                return a;
+            })
+        );
+        log(me);
+        log();
     };
     const Q1 = (data, callback) => {
         const result = parse(data);
@@ -66,5 +116,4 @@
         console.log(result);
         console.log();
     });
-    
 }();
