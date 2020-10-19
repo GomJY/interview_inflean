@@ -1,3 +1,4 @@
+const {reduce,filter,map,add,go,pipe,curry, L, take, go1, takeAll, C} = require('./module/fx_my.js');
 /**
  * 1.
  * data 객체는
@@ -64,34 +65,37 @@
             return false;
         }
         //Object, Array인지 검사
-        const isObjectArray = (data) => data == null || (data.constructor !== Array && Object(data).keys == 0) ? false : true;
-        //Object를 array로 전환
-        const object_to_array = (object) => Object.keys(object).map(keyName => object[keyName]); 
-        //promise 후에 값 받기
-        const get_promiseAfter = async (object) => {
-            let result = {};
-            let isArray = object instanceof Array;
-
-            for(let objName in object) {
-                //Promise인 경우 format에 맞게 then, catch 처리 후 다시 내부 검사
-                if(object[objName] instanceof Promise) {
-                    result[objName] = await new Promise(res => {
-                        object[objName]
-                            .then(then_1 => res(has_promise_in_group(then_1) ? get_promiseAfter(then_1) : then_1))
-                            .catch(err => res(has_promise_in_group(err) ?  get_promiseAfter(err) : res(err_format(err))));
-                    });
-                //Array, Object 형식인 경우 내부 검사
-                } else if(isObjectArray(object[objName]) && has_promise_in_group(object[objName])) {
-                    result[objName] = await new Promise(res => {res(get_promiseAfter(object[objName]))});
-                // 기본형 변수는 바로 대입
-                } else {
-                    result[objName] = object[objName];
-                }
-            }
-            //Array를 Object로 처리한 경우 다시 Object를 Array로 변환
-            return isArray ? object_to_array(result) : result;
-        }
-        return get_promiseAfter(data);
+        const isObjectArray = (data) => data == null || !(data.constructor === Array || data.constructor === Object) ? false : true;
+        const obj_to_objArray = object => Object.keys(object).map(v => {let r = {}; r[v] = object[v]; return r;});
+        //object를 Array로 번경
+        const object_to_array = (object) => Object.keys(object).map(keyName => object[keyName]);
+        const get_object_key_value = obj => [Object.keys(obj).shift(), Object.values(obj).shift()];
+        const get_promiseValue = data => new Promise(res => {
+            let isArray = data instanceof Array;
+            return go(
+                obj_to_objArray(data),
+                map(async a => {
+                    let [key, value] =get_object_key_value(a);
+                    //value가 Promise인지 확인 후 Promise_then,catch 처리 후 Promise로 반환
+                    if(value instanceof Promise) {
+                        return new Promise(res => {
+                                value.then(async then_1 => has_promise_in_group(then_1) ? // then안에 Promise객체가 있는지 확인
+                                        res((a[key] = await get_promiseValue(then_1), a)) : res((a[key] = then_1, a))
+                                ).catch(err => (a[key] = `${err} (에러해결)`, res(a)));
+                            });
+                    //array, Object 인 경우 안에 Promise가 있는지 확인
+                    } else if(isObjectArray(value) && has_promise_in_group(value)) {
+                        return Promise.resolve((a[key] = await get_promiseValue(value), a));
+                    }
+                    return a;
+                }),
+                C.map(a => a),
+                reduce((a, b) => (a[get_object_key_value(b)[0]] = get_object_key_value(b)[1], a)),
+            ).then(data => {
+                res(isArray ? object_to_array(data) : data);
+            });
+        }); 
+        return get_promiseValue(data);
     };
     const Q1 = (data, callback) => {
         const result = parse(data);
