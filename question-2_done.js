@@ -44,7 +44,7 @@
  * 
  * QUERY문
  * 1. 덧글 작성 후 알림 추가
- * INSERT INTO 'notices' ('user_id', 'post_id', 'comment_id', 'read_flag') VALUES ('${댓글이 달린 게시글 작성자 users.id}',${댓글이 달린 게시글 post_id}, ${덧글 comments.id} 0);
+ * INSERT INTO 'notices' ('user_id', 'post_id', 'comment_id', 'read_flag') VALUES ('${게시글 작성자 users.id}',${댓글이 달린 게시글 post_id}, ${덧글 comments.id} 0);
  * 2-1. 읽지 않은 알림 갯수
  *  SELECT count(*) FROM notices WHERE user_id = ${유저1_user.id} AND read_flag = false;
  * 2-2.  알림을 보여줄때
