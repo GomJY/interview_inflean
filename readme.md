@@ -10,17 +10,17 @@
 
 
 # question-2
-![Untitled](https://github.com/GomJY/interview_inflean/blob/master/question-2_done-diagram.png)
 
- # notices 
-  ## 스키마
-    - id: integer, PK
-    - user_id: integer, FK:users.id,
-    - post_id: integer, FK:posts.id,
-    - comment_id : integer, FK:comments
-    - read_flag   : boolean(mysql: TINYINT)
-  ## 다이어그램 링크
-  https://drawsql.app/ju-1/diagrams/inflean-question2
+
+  ## notices 스키마
+    id: integer, PK
+    user_id: integer, FK:users.id,
+    post_id: integer, FK:posts.id,
+    comment_id : integer, FK:comments
+    read_flag   : boolean(mysql: TINYINT)
+  
+  ## [다이어그램 링크](https://drawsql.app/ju-1/diagrams/inflean-question2)
+  ![Untitled](https://github.com/GomJY/interview_inflean/blob/master/question-2_done-diagram.png)
   
   ## QUERY문
   ### 1. 덧글 작성 후 알림 추가
