@@ -98,8 +98,8 @@
         result && result.constructor === Promise ? result.then(callback) : callback(result);
     }; 
     const start = new Date;
-    // console.log('\n데이터');
-    // console.log(data);
+    console.log('\n데이터');
+    console.log(data);
     console.log('\n기대결과');
     console.log(sample);
     Q1(data, result => {
