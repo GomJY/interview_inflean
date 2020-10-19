@@ -19,19 +19,10 @@
         boo: true, str: '',
         obj: { num: 1, obj: { k: 'obj in obj' }, arr: ['arr in obj'] },
         arr: ['str in arr', { k: 'obj in arr', und: undefined }, ['arr in arr']],
-
         pro_nul: pro_res(null), pro_num: pro_rej(-1), pro_obj: pro_res({ k: 'pro_obj' }),
         pro_arr: pro_res(['str in pro_arr', { k: 'obj in pro_arr' }, ['arr in pro_arr']]),
-        
         pro_in_obj: pro_res({ und: pro_res(undefined), str: pro_rej('str') }),
-        
         pro_in_arr: ['str in arr', pro_res({ k: 'obj in arr', err: pro_rej('err1') }), ['arr in arr', pro_rej('err2')]],
-
-        pro_in_obj_in_obj: pro_res({ a: pro_res({a_1: pro_res(1), a_2: pro_rej(2)}), b: pro_rej({b_1: 1, b_2: 2}) }),
-        pro_in_obj_in_obj_in_obj: pro_res({ 
-            c: pro_res({c_1: pro_res({c_1_1: pro_res(2)}), c_2: pro_rej({c_2_1: pro_res(3), c_2_2: pro_rej(4)})}), 
-            d: pro_rej({d_1: pro_res(1), d_2: pro_rej(2), d_3_normal: 0}) 
-        }),
     };
     const sample = {
         boo: true, str: '',
