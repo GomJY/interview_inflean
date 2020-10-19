@@ -25,7 +25,8 @@
   ## QUERY문
   ### 1. 덧글 작성 후 알림 추가
   ```sql
-  INSERT INTO 'notices' ('user_id', 'post_id', 'comment_id', 'read_flag') VALUES ('${게시글 작성자 users.id}',${댓글이 달린 게시글 post_id}, ${덧글 comments.id} 0);
+  INSERT INTO 'notices' ('user_id', 'post_id', 'comment_id', 'read_flag') 
+    VALUES ('${게시글 작성자 users.id}',${댓글이 달린 게시글 post_id}, ${덧글 comments.id} 0);
   ```
   ### 2-1. 읽지 않은 알림 갯수
    ```sql
@@ -33,7 +34,8 @@
    ```
   ### 2-2.  알림을 보여줄때
   ```sql
-    SELECT posts.title AS title, users.name AS name, LEFT(comments.body, 5) AS body, comments.created_at AS time, notices.read_flag AS read_flag
+    SELECT posts.title AS title, users.name AS name, LEFT(comments.body, 5) AS body, 
+            comments.created_at AS time, notices.read_flag AS read_flag
       FROM (SELECT  FROM my_test.notices WHERE user_id = ${알림을 보여줄 사용자 users.id}) AS notices
       JOIN posts ON notices.post_id = posts.id
         JOIN comments ON notices.comment_id = comments.id
